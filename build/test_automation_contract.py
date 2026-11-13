@@ -16,6 +16,7 @@ TOOLS = {
     "YQ_VERSION": "mikefarah/yq",
     "AWSCLI_VERSION": "aws/aws-cli",
     "OC_VERSION": "openshift/oc",
+    "RTA_VERSION": "openshift-online/rosa-trusted-actions",
 }
 
 
@@ -30,7 +31,7 @@ def extract(content):
             pattern = pattern.replace("(?<currentValue>", "(?P<currentValue>")
             found.extend((manager["depNameTemplate"], m["currentValue"])
                          for m in re.finditer(pattern, content))
-    assert len(found) == 6, "missing or duplicated annotated tool ARG"
+    assert len(found) == len(TOOLS), "missing or duplicated annotated tool ARG"
     assert {dep for dep, _ in found} == set(TOOLS.values())
     return found
 
@@ -47,7 +48,7 @@ def fixture():
 
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
 def test_extraction(newline):
-    assert len(extract(fixture().replace("\n", newline))) == 6
+    assert len(extract(fixture().replace("\n", newline))) == len(TOOLS)
 
 
 def test_checked_in_pins():
@@ -86,8 +87,8 @@ const { applyPackageRules } = await import(base + '/dist/util/package-rules/inde
 const { checkMinimumReleaseAge } = await import(base + '/dist/util/minimum-release-age.js');
 for (const text of [content, content.replaceAll('\n', '\r\n')]) {
   const deps = config.customManagers.flatMap(m => extractPackageFile(text, 'Containerfile', m)?.deps ?? []);
-  assert.equal(deps.length, 6);
-  assert.equal(new Set(deps.map(d => d.depName)).size, 6);
+  assert.equal(deps.length, 7);
+  assert.equal(new Set(deps.map(d => d.depName)).size, 7);
 }
 const transform = getExpression(config.customDatasources['openshift-stable'].transformTemplates[0]);
 for (const [lines, expected] of [
@@ -159,7 +160,7 @@ def test_image_arg_contract():
         assert "--arch" in block
     assert "releases/latest" not in stage
     copies = re.findall(r'^COPY --from=sre-tools (.+)$', text, re.MULTILINE)
-    assert len(copies) == 7  # six tools and generated inventory
+    assert len(copies) == len(TOOLS) + 1  # tools and generated inventory
     for copy in copies:
         assert not any(forbidden in copy for forbidden in ["/keys", "sre_tools.py", "verify_sre_tools.py"])
     assert "/usr/local/share/rosa-boundary/tool-versions.json" in text

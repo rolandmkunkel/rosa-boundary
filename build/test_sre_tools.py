@@ -200,7 +200,7 @@ def test_secret_free_validation_contract():
     source = (Path(__file__).resolve().parents[1] / 'Containerfile').read_text()
     runs = source.replace('\\\n', ' ').split('RUN ')[1:]
     validations = [run for run in runs if '--validate-installed' in run]
-    assert len(validations) == 6
+    assert len(validations) == len(s.TOOLS)
     for run in validations:
         assert run.startswith('--network=none ')
         assert 'type=secret' not in run

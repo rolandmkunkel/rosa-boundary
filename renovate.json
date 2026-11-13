@@ -95,6 +95,19 @@
       "depNameTemplate": "openshift/oc",
       "datasourceTemplate": "custom.openshift-stable",
       "versioningTemplate": "semver-coerced"
+    },
+    {
+      "customType": "regex",
+      "description": "Update only RTA_VERSION",
+      "managerFilePatterns": [
+        "/^Containerfile$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\r?\\n)# renovate: datasource=github-releases depName=openshift-online/rosa-trusted-actions\\r?\\nARG RTA_VERSION=\"(?<currentValue>v\\d+\\.\\d+\\.\\d+)\"(?:\\r?\\n|$)"
+      ],
+      "depNameTemplate": "openshift-online/rosa-trusted-actions",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver-coerced"
     }
   ],
   "packageRules": [
@@ -177,7 +190,8 @@
         "openshift/osdctl",
         "mikefarah/yq",
         "aws/aws-cli",
-        "openshift/oc"
+        "openshift/oc",
+        "openshift-online/rosa-trusted-actions"
       ],
       "automerge": false,
       "groupName": null,

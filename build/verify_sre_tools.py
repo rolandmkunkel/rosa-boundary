@@ -18,7 +18,7 @@ import tempfile
 from sre_tools import TOOLS, SIGNERS, actual_version, pin_version, require_version
 
 ARGS = dict(zip(TOOLS, ('OCM_VERSION', 'BACKPLANE_CLI_VERSION', 'OSDCTL_VERSION',
-                       'YQ_VERSION', 'OC_VERSION', 'AWSCLI_VERSION')))
+                       'YQ_VERSION', 'OC_VERSION', 'AWSCLI_VERSION', 'RTA_VERSION')))
 INVENTORY = Path('/usr/local/share/rosa-boundary/tool-versions.json')
 
 
@@ -38,8 +38,8 @@ def pins(path):
 
 
 def validate(entries, expected, arch):
-    if len(entries) != 6 or {entry['tool'] for entry in entries} != set(TOOLS):
-        raise ValueError('inventory must contain exactly six unique tools')
+    if len(entries) != len(TOOLS) or {entry['tool'] for entry in entries} != set(TOOLS):
+        raise ValueError('inventory must contain exactly ' + str(len(TOOLS)) + ' unique tools')
     for entry in entries:
         tool = entry['tool']
         if entry['architecture'] != arch or entry['expected_pin'] != expected[tool]:
@@ -53,7 +53,7 @@ def validate(entries, expected, arch):
 
 def combine(directory, destination):
     entries = [json.loads(path.read_text()) for path in sorted(directory.glob('*.json'))]
-    if len(entries) != 6 or {entry['tool'] for entry in entries} != set(TOOLS):
+    if len(entries) != len(TOOLS) or {entry['tool'] for entry in entries} != set(TOOLS):
         raise ValueError('incomplete inventory')
     destination.write_text(json.dumps(entries, indent=2) + '\n')
 

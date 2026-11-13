@@ -16,11 +16,11 @@ import urllib.parse
 import urllib.request
 import zipfile
 
-TOOLS = ('ocm', 'ocm-backplane', 'osdctl', 'yq', 'oc', 'aws')
+TOOLS = ('ocm', 'ocm-backplane', 'osdctl', 'yq', 'oc', 'aws', 'rta')
 SIGNERS = {'aws': 'FB5DB77FD5C118B80511ADA8A6310ACC4672475C',
            'oc': '567E347AD0044ADE55BA8A5F199E2F91FD431D51'}
 REPOS = {'ocm': 'openshift-online/ocm-cli', 'ocm-backplane': 'openshift/backplane-cli',
-         'osdctl': 'openshift/osdctl', 'yq': 'mikefarah/yq'}
+         'osdctl': 'openshift/osdctl', 'yq': 'mikefarah/yq', 'rta': 'openshift-online/rosa-trusted-actions'} # TODO change to rosa-boundary repo once releasing the RTA CLI has been moved here
 
 
 def pin_version(tool, pin):
@@ -155,7 +155,7 @@ def verify_signature(tool, data, signature, key_dir, output=None):
 def actual_version(tool, executable):
     commands = {'ocm': ['version'], 'ocm-backplane': ['version'],
                 'osdctl': ['version', '--skip-version-check'],
-                'yq': ['--version'], 'oc': ['version', '--client'], 'aws': ['--version']}
+                'yq': ['--version'], 'oc': ['version', '--client'], 'aws': ['--version'], 'rta': ['version']}
     with tempfile.TemporaryDirectory() as home:
         command = [str(executable)] + commands[tool]
         identity = {}
@@ -176,7 +176,8 @@ def actual_version(tool, executable):
         return value.removeprefix('v')
     patterns = {'aws': r'aws-cli/(\d+\.\d+\.\d+)(?![\d.\w+-])',
                 'yq': r'version v?(\d+\.\d+\.\d+)(?![\d.\w+-])',
-                'oc': r'Client Version: v?(\d+\.\d+\.\d+)(?![\d.\w+-])'}
+                'oc': r'Client Version: v?(\d+\.\d+\.\d+)(?![\d.\w+-])',
+                'rta': r'rta version: v?(\d+\.\d+\.\d+)(?![\d.\w+-])'}
     pattern = patterns.get(tool, r'(?<![\d.])v?(\d+\.\d+\.\d+)(?![\d.\w+-])')
     versions = re.findall(pattern, output)
     if len(versions) != 1:
@@ -201,9 +202,9 @@ def install(tool, pin, arch, output, keys):
             goarch = 'x86_64' if arch == 'amd64' else 'arm64'
             names = {'ocm': f'ocm-linux-{arch}', 'ocm-backplane': f'ocm-backplane_{version}_Linux_{goarch}.tar.gz',
                      'osdctl': f'osdctl_{version}_Linux_{goarch}.tar.gz',
-                     'yq': f'yq_linux_{arch}'}
+                     'yq': f'yq_linux_{arch}', 'rta': f'rta_Linux_{goarch}.tar.gz'}
             name = names[tool]
-            sums = {'ocm': name + '.sha256', 'osdctl': 'sha256sum.txt', 'yq': 'checksums-bsd'}
+            sums = {'ocm': name + '.sha256', 'osdctl': 'sha256sum.txt', 'yq': 'checksums-bsd', 'rta': f'rosa-trusted-actions_{version}_checksums.txt'}
             source = f'https://api.github.com/repos/{REPOS[tool]}/releases/tags/{pin}'
             subprocess.run(['github_dl', 'download', '--url', source,
                             '--checksum_file', sums.get(tool, 'checksums.txt'),

@@ -117,6 +117,17 @@ RUN python3 /usr/local/share/sre-tools/sre_tools.py aws \
 RUN --network=none python3 /usr/local/share/sre-tools/sre_tools.py aws \
         --version "${AWSCLI_VERSION}" --arch "$(platform_convert "@@PLATFORM@@" --amd64 --arm64)" --validate-installed
 
+# renovate: datasource=github-releases depName=openshift-online/rosa-trusted-actions
+ARG RTA_VERSION="v0.0.1"
+RUN --mount=type=secret,id=GITHUB_TOKEN \
+    --mount=type=secret,id=rosa-boundary-github-app/GITHUB_APP_ID \
+    --mount=type=secret,id=rosa-boundary-github-app/GITHUB_APP_PEM \
+    --mount=type=secret,id=rosa-boundary-github-app/GITHUB_APP_INSTALL_ID \
+    python3 /usr/local/share/sre-tools/sre_tools.py rta \
+        --version "${RTA_VERSION}" --arch "$(platform_convert "@@PLATFORM@@" --amd64 --arm64)"
+RUN --network=none python3 /usr/local/share/sre-tools/sre_tools.py rta \
+        --version "${RTA_VERSION}" --arch "$(platform_convert "@@PLATFORM@@" --amd64 --arm64)" --validate-installed
+
 RUN python3 /usr/local/share/sre-tools/verify_sre_tools.py combine /opt/inventory /opt/tool-versions.json
 
 
@@ -217,13 +228,14 @@ RUN dnf install --assumeyes --nodocs \
     && dnf clean all \
     && rm --recursive --force /var/cache/yum
 
-# Directly installed tools: ocm, ocm-backplane, oc, osdctl, yq, AWS CLI v2
+# Directly installed tools: ocm, ocm-backplane, oc, osdctl, yq, rta, AWS CLI v2
 COPY --from=sre-tools /opt/aws_dist           /usr/local/aws-cli/v2/current
 COPY --from=sre-tools /opt/ocm                /usr/local/bin/
 COPY --from=sre-tools /opt/ocm-backplane      /usr/local/bin/
 COPY --from=sre-tools /opt/oc                 /usr/local/bin/
 COPY --from=sre-tools /opt/osdctl             /usr/local/bin/
 COPY --from=sre-tools /opt/yq                 /usr/local/bin/
+COPY --from=sre-tools /opt/rta                /usr/local/bin/
 
 COPY --from=sre-tools /opt/tool-versions.json /usr/local/share/rosa-boundary/tool-versions.json
 
